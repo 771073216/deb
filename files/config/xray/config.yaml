@@ -1,0 +1,28 @@
+inbounds:
+- port: 2001
+  listen: 127.0.0.1
+  protocol: trojan
+  tag: grpc
+  settings:
+    clients:
+    - password: "passwd"
+  streamSettings:
+    network: grpc
+    grpcSettings:
+      serviceName: grpc
+
+outbounds:
+- tag: direct
+  protocol: freedom
+- tag: blocked
+  protocol: blackhole
+
+routing:
+  domainStrategy: AsIs
+  rules:
+  - type: field
+    ip:
+    - geoip:private
+    domain:
+    - geosite:category-ads-all
+    outboundTag: blocked
