@@ -17,7 +17,7 @@ jobs:
           ver=$(wget -qO- https://api.github.com/repos/mvdan/sh/releases/latest | awk -F'"' '/tag_name/{print$4}')
           ver_local=$(./tools/shfmt -version)
           if [ "$ver" == "$ver_local" ]; then
-            return
+            exit 0
           fi
           wget -q https://github.com/mvdan/sh/releases/download/$ver/shfmt_${ver}_linux_amd64 -O tools/shfmt
           chmod +x tools/shfmt
