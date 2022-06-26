@@ -1,4 +1,4 @@
-if [ "\$1" = "configure" ]; then
+if [ "$1" = "configure" ]; then
   if ! getent group caddy > /dev/null; then
     groupadd --system caddy
   fi
