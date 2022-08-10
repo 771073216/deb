@@ -14,6 +14,7 @@ inbounds:
 outbounds:
 - tag: direct
   protocol: freedom
+  domainStrategy: UseIPv4
 - tag: blocked
   protocol: blackhole
 
