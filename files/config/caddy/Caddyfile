@@ -3,7 +3,7 @@
         protocol grpc
         path  /grpc/*
     }
-    reverse_proxy @grpc h2c://127.0.0.1:2001
+    reverse_proxy @grpc unix+h2c//dev/shm/grpc.socket
     root * /var/www
     file_server
 }
