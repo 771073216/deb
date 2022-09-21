@@ -1,6 +1,5 @@
 inbounds:
-- port: 2001
-  listen: 127.0.0.1
+- listen: /dev/shm/grpc.socket,0666
   protocol: trojan
   tag: grpc
   settings:
