@@ -146,7 +146,7 @@ def gen_debfile(name):
         mask += 'deb-systemd-helper mask %s.service > /dev/null || true\n' % i
         unmask += 'deb-systemd-helper unmask %s.service > /dev/null || true\n' % i
         purge += 'deb-systemd-helper purge %s.service > /dev/null || true\n' % i
-        try_restart += 'deb-systemd-invoke try_restart %s.service > /dev/null || true\n' % i
+        try_restart += 'deb-systemd-invoke try-restart %s.service > /dev/null || true\n' % i
         stop += 'deb-systemd-invoke stop %s.service > /dev/null || true\n' % i
         ver += ver_conf[i] + '+'
         if 'config_name' in conf['dist'][i]['path'].keys():
