@@ -231,7 +231,7 @@ def main(name):
         os.system('git config --local user.name "github-actions[bot]"')
         os.system('git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"')
         os.system('git add .')
-        os.system('git commit -am ' + commit.rstrip(' '))
+        os.system('git commit -am ' + commit)
         os.system('git push')
 
 
