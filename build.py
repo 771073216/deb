@@ -41,7 +41,7 @@ def check_version(programs, nums):
         version_file_w = open('version.json', 'w', encoding='utf-8')
         json.dump(ver_conf, version_file_w, sort_keys=True, indent=0)
         version_file_w.close()
-        commit += '"' + i + ': v' + local_version + '-> v' + remote_version + '"'
+        commit += '"' + i + ': v' + local_version + '-> v' + remote_version + ' "'
     if update_flag == 1:
         main(nums)
 
@@ -231,7 +231,7 @@ def main(name):
         os.system('git config --local user.name "github-actions[bot]"')
         os.system('git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"')
         os.system('git add .')
-        os.system('git commit -am ' + commit)
+        os.system('git commit -am ' + commit.rstrip(' '))
         os.system('git push')
 
 
