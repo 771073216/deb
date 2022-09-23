@@ -41,7 +41,7 @@ def check_version(programs, nums):
         version_file_w = open('version.json', 'w', encoding='utf-8')
         json.dump(ver_conf, version_file_w, sort_keys=True, indent=0)
         version_file_w.close()
-        commit += '"' + i + ': v' + local_version + '-> v' + remote_version + ' "'
+        commit += '"' + i + ': v' + local_version + ' -> v' + remote_version + ' "'
     if update_flag == 1:
         main(nums)
 
