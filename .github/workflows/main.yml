@@ -29,4 +29,5 @@ jobs:
   
       - name: Check and upload
         run: |
+          dpkg --version
           python3 build.py
