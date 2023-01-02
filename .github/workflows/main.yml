@@ -19,7 +19,7 @@ jobs:
           if [ "$ver" == "$ver_local" ]; then
             exit 0
           fi
-          wget -q https://github.com/mvdan/sh/releases/download/$ver/shfmt_${ver}_linux_amd64 -O tools/shfmt
+          wget -q https://github.com/mvdan/sh/releases/latest/download/shfmt_"$ver"_linux_amd64 -O tools/shfmt
           chmod +x tools/shfmt
           git config --local user.name "github-actions[bot]"
           git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
