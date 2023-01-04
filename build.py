@@ -240,6 +240,7 @@ def check_tools():
     remote_version = str(json.loads(gh_api)['tag_name'])
     if remote_version == local_version:
         return
+    print("123")
     res = requests.get("https://github.com/mvdan/sh/releases/latest/download/shfmt_"+remote_version+"_linux_amd64")
     file = open('tools/shfmt', 'wb')
     file.write(res.content)
