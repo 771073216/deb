@@ -238,6 +238,8 @@ def check_tools():
     local_version=os.popen("./tools/shfmt -version").read()
     gh_api = requests.get('https://api.github.com/repos/mvdan/sh/releases/latest').text
     remote_version = str(json.loads(gh_api)['tag_name'])
+    print(remote_version)
+    print(local_version)
     if remote_version == local_version:
         return
     print("123")
