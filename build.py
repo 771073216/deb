@@ -235,14 +235,11 @@ def main(name):
         os.system('git push')
 
 def check_tools():
-    local_version=os.popen("./tools/shfmt -version").read()
+    local_version=os.popen("./tools/shfmt -version").read().replace('\n','')
     gh_api = requests.get('https://api.github.com/repos/mvdan/sh/releases/latest').text
     remote_version = str(json.loads(gh_api)['tag_name'])
-    print(remote_version)
-    print(local_version)
     if remote_version == local_version:
         return
-    print("123")
     res = requests.get("https://github.com/mvdan/sh/releases/latest/download/shfmt_"+remote_version+"_linux_amd64")
     file = open('tools/shfmt', 'wb')
     file.write(res.content)
