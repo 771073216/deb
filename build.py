@@ -234,9 +234,27 @@ def main(name):
         os.system('git commit -am ' + commit)
         os.system('git push')
 
+def check_tools():
+    local_version=os.popen("./tools/shfmt -version").read()
+    gh_api = requests.get('https://api.github.com/repos/mvdan/sh/releases/latest').text
+    remote_version = str(json.loads(gh_api)['tag_name'])
+    if remote_version == local_version:
+        return
+    res = requests.get("https://github.com/mvdan/sh/releases/latest/download/shfmt_"+remote_version+"_linux_amd64")
+    file = open('tools/shfmt', 'wb')
+    file.write(res.content)
+    file.close()
+    commits='"'+"tools/shfmt: "+local_version+" -> "+remote_version+'"'
+    os.chmod('tools/shfmt', 0o755)
+    os.system('git config --local user.name "github-actions[bot]"')
+    os.system('git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"')
+    os.system('git add .')
+    os.system('git commit -am ' + commits)
+    os.system('git push')
 
 if __name__ == "__main__":
     n = 0
+    check_tools()
     for num in conf['deb']:
         check_version(num['main_program'], n)
         n = n + 1
