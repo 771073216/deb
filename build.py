@@ -11,6 +11,15 @@ version_file = open('version.json', 'r', encoding='utf-8')
 ver_conf = json.load(version_file)
 global update_flag, commit
 
+def add_space(strs,number):
+    k=''
+    m=0
+    for i in strs:
+        k+=' '*number+i
+        if m < len(strs):
+            k +='\n'
+        m=m+1
+    return k
 
 def download_file(url, file_name):
     res = requests.get(url)
@@ -114,12 +123,12 @@ def dist(name):
 
 
 def gen_debfile(name):
-    check_enable = ""
-    mask = ''
-    unmask = ""
-    purge = ''
-    try_restart = ''
-    stop = ''
+    check_enable = []
+    mask = []
+    unmask = []
+    purge = []
+    try_restart = []
+    stop = []
     custom = ''
     ver = ''
     conffile = ''
@@ -137,17 +146,18 @@ def gen_debfile(name):
         f.close()
 
     for i in conf['deb'][name]['main_program']:
-        check_enable += '''  if deb-systemd-helper --quiet was-enabled %s.service; then
-                               deb-systemd-helper enable %s.service > /dev/null || true
-                               deb-systemd-invoke start %s.service > /dev/null || true
-                             else
-                               deb-systemd-helper update-state %s.service > /dev/null || true
-                             fi\n''' % (i, i, i, i)
-        mask += 'deb-systemd-helper mask %s.service > /dev/null || true\n' % i
-        unmask += 'deb-systemd-helper unmask %s.service > /dev/null || true\n' % i
-        purge += 'deb-systemd-helper purge %s.service > /dev/null || true\n' % i
-        try_restart += 'deb-systemd-invoke try-restart %s.service > /dev/null || true\n' % i
-        stop += 'deb-systemd-invoke stop %s.service > /dev/null || true\n' % i
+        check_enable.append('''\
+  if deb-systemd-helper --quiet was-enabled %s.service; then
+    deb-systemd-helper enable %s.service > /dev/null || true
+    deb-systemd-invoke start %s.service > /dev/null || true
+  else
+    deb-systemd-helper update-state %s.service > /dev/null || true
+  fi''' % (i, i, i, i))
+        mask.append('deb-systemd-helper mask %s.service > /dev/null || true' % i)
+        unmask.append('deb-systemd-helper unmask %s.service > /dev/null || true' % i)
+        purge.append('deb-systemd-helper purge %s.service > /dev/null || true' % i)
+        try_restart.append('deb-systemd-invoke try-restart %s.service > /dev/null || true' % i)
+        stop.append('deb-systemd-invoke stop %s.service > /dev/null || true' % i)
         ver += ver_conf[i] + '+'
         if 'config_name' in conf['dist'][i]['path'].keys():
             conffile += '/usr/local/etc/' + i + '/' + conf['dist'][i]['path']['config_name'] + '\n'
@@ -177,7 +187,7 @@ if [ "$1" = "configure" ] || [ "$1" = "abort-upgrade" ] || [ "$1" = "abort-decon
       %s
     fi
   fi
-fi''' % (custom.rstrip('\n'), unmask.rstrip('\n'), check_enable.rstrip('\n'), try_restart.rstrip('\n'))
+fi''' % (custom, add_space(unmask,2), add_space(check_enable,0), add_space(try_restart,6))
     file_write('deb/DEBIAN/postinst', str_postinst)
 
     str_postrm = '''#!/bin/sh
@@ -187,22 +197,22 @@ if [ -d /run/systemd/system ]; then
 fi
 if [ "$1" = "remove" ]; then
   if [ -x "/usr/bin/deb-systemd-helper" ]; then
-    %s
+%s
   fi
 fi
 if [ "$1" = "purge" ]; then
   if [ -x "/usr/bin/deb-systemd-helper" ]; then
-    %s
-    %s
+%s
+%s
   fi
-fi''' % (mask.rstrip('\n'), purge.rstrip('\n'), unmask.rstrip('\n'))
+fi''' % (add_space(mask,4), add_space(purge,4), add_space(unmask,4))
     file_write('deb/DEBIAN/postrm', str_postrm)
 
     str_prerm = '''#!/bin/sh
 set -e
 if [ -d /run/systemd/system ] && [ "$1" = remove ]; then
-  %s
-fi''' % stop.rstrip('\n')
+%s
+fi''' % add_space(stop,2)
     file_write('deb/DEBIAN/prerm', str_prerm)
 
     str_conffiles = '''%s''' % conffile
@@ -211,8 +221,6 @@ fi''' % stop.rstrip('\n')
     os.chmod('deb/DEBIAN/postinst', 0o755)
     os.chmod('deb/DEBIAN/postrm', 0o755)
     os.chmod('deb/DEBIAN/prerm', 0o755)
-
-    os.system('./tools/shfmt -w -i 2 -ci -sr deb/DEBIAN/p*')
 
 
 def main(name):
@@ -234,27 +242,8 @@ def main(name):
         os.system('git commit -am ' + commit)
         os.system('git push')
 
-def check_tools():
-    local_version=os.popen("./tools/shfmt -version").read().replace('\n','')
-    gh_api = requests.get('https://api.github.com/repos/mvdan/sh/releases/latest').text
-    remote_version = str(json.loads(gh_api)['tag_name'])
-    if remote_version == local_version:
-        return
-    res = requests.get("https://github.com/mvdan/sh/releases/latest/download/shfmt_"+remote_version+"_linux_amd64")
-    file = open('tools/shfmt', 'wb')
-    file.write(res.content)
-    file.close()
-    commits='"'+"tools/shfmt: "+local_version+" -> "+remote_version+'"'
-    os.chmod('tools/shfmt', 0o755)
-    os.system('git config --local user.name "github-actions[bot]"')
-    os.system('git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"')
-    os.system('git add .')
-    os.system('git commit -am ' + commits)
-    os.system('git push')
-
 if __name__ == "__main__":
     n = 0
-    check_tools()
     for num in conf['deb']:
         check_version(num['main_program'], n)
         n = n + 1
