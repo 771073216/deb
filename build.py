@@ -16,9 +16,9 @@ def add_space(strs,number):
     m=0
     for i in strs:
         k+=' '*number+i
+        m = m + 1
         if m < len(strs):
             k +='\n'
-        m=m+1
     return k
 
 def download_file(url, file_name):
@@ -179,12 +179,12 @@ Description: %s
 set -e
 %s
 if [ "$1" = "configure" ] || [ "$1" = "abort-upgrade" ] || [ "$1" = "abort-deconfigure" ] || [ "$1" = "abort-remove" ]; then
-  %s
-  %s
+%s
+%s
   if [ -d /run/systemd/system ]; then
     systemctl --system daemon-reload > /dev/null || true
     if [ -n "$2" ]; then
-      %s
+%s
     fi
   fi
 fi''' % (custom, add_space(unmask,2), add_space(check_enable,0), add_space(try_restart,6))
@@ -193,7 +193,7 @@ fi''' % (custom, add_space(unmask,2), add_space(check_enable,0), add_space(try_r
     str_postrm = '''#!/bin/sh
 set -e
 if [ -d /run/systemd/system ]; then
-  systemctl --system daemon-reload >/dev/null || true
+  systemctl --system daemon-reload > /dev/null || true
 fi
 if [ "$1" = "remove" ]; then
   if [ -x "/usr/bin/deb-systemd-helper" ]; then
