@@ -46,11 +46,10 @@ def update_file(nums):
         if str(url).count('%s') == 1:
             url = url % ver_conf[name]
         file_name = os.path.basename(url)
-        download_file(url, file_name)
-        print(url, file_name)
         if file_name.count('.') != 0:
             file_name = name + '.' + file_name.split('.', maxsplit=1)[1]
-
+        download_file(url, file_name)
+        
         if conf['dist'][i].get("build_command"):
             os.system('bash ' + conf['dist'][i].get("build_command"))
             return
