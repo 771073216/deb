@@ -46,10 +46,10 @@ def update_file(nums):
         if str(url).count('%s') == 1:
             url = url % ver_conf[name]
         file_name = os.path.basename(url)
+
         if file_name.count('.') != 0:
             file_name = name + '.' + file_name.split('.', maxsplit=1)[1]
         download_file(url, file_name)
-        
         if conf['dist'][i].get("build_command"):
             os.system('bash ' + conf['dist'][i].get("build_command"))
             return
@@ -266,11 +266,13 @@ def main(names):
 
 
 if __name__ == "__main__":
+    n = 0
     for num in conf['deb']:
         commit = []
         code = main(num['main_program'])
         if code == 1:
             if num.get("include"):
                 include_add(num["include"])
-            gen_debfile(num.get("name"))
+            gen_debfile(n)
             push(commit)
+        n = n + 1
