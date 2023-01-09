@@ -11,6 +11,14 @@ version_file = open('version.json', 'r', encoding='utf-8')
 ver_conf = json.load(version_file)
 
 
+def get_index(tag,name):
+    k=0
+    for i in conf[tag]:
+        if i.get("name") == name:
+            return k
+        k = k+1
+    return -1
+
 def download_file(url, file_name):
     res = requests.get(url)
     file = open('tmp/' + file_name, 'wb')
@@ -46,10 +54,10 @@ def update_file(nums):
         if str(url).count('%s') == 1:
             url = url % ver_conf[name]
         file_name = os.path.basename(url)
-
         if file_name.count('.') != 0:
             file_name = name + '.' + file_name.split('.', maxsplit=1)[1]
         download_file(url, file_name)
+        
         if conf['dist'][i].get("build_command"):
             os.system('bash ' + conf['dist'][i].get("build_command"))
             return
@@ -112,14 +120,13 @@ def check_update(ks):
 
 def include_add(includes):
     for name in includes:
-        for i in conf["dist"]:
-            if name == i.get("name"):
-                url = i.get("url")
-                data_path = i["path"].get("data_path")
-                download_file(url, name)
-                data_dir = 'deb' + os.path.dirname(str(data_path))
-                check_dir(data_dir)
-                os.rename('tmp/' + name, 'deb' + data_path)
+        m=get_index("dist",name)
+        url = conf["dist"][m].get("url")
+        data_path = conf["dist"][m]["path"].get("data_path")
+        download_file(url, name)
+        data_dir = 'deb' + os.path.dirname(str(data_path))
+        check_dir(data_dir)
+        os.rename('tmp/' + name, 'deb' + data_path)
 
 
 def file_write(path, strings):
@@ -158,6 +165,7 @@ def gen_debfile(name):
     conffile = ''
     check_dir('deb/DEBIAN')
     size = get_size('deb/')
+    name = get_index("deb",name)
     deb_name = conf['deb'][name]['name']
     deb_arch = conf['deb'][name]['arch']
     deb_description = conf['deb'][name]['description']
@@ -183,10 +191,12 @@ def gen_debfile(name):
         try_restart.append('deb-systemd-invoke try-restart %s.service > /dev/null || true' % i)
         stop.append('deb-systemd-invoke stop %s.service > /dev/null || true' % i)
         ver += ver_conf[i] + '+'
-        if 'config_name' in conf['dist'][i]['path'].keys():
-            conffile += '/usr/local/etc/' + i + '/' + conf['dist'][i]['path']['config_name'] + '\n'
-        if 'config_path' in conf['dist'][i]['path'].keys():
-            conffile += conf['dist'][i]['path']['config_path'] + '\n'
+        number = get_index("dist", name)
+        dir_name=conf['dist'][number]['path'].get('name')
+        if conf['dist'][number]['path'].get('config_name'):
+            conffile += '/usr/local/etc/' + dir_name + '/' + conf['dist'][number]['path']['config_name'] + '\n'
+        if conf['dist'][number]['path'].get('config_path'):
+            conffile += conf['dist'][number]['path']['config_path'] + '\n'
 
     str_control = '''Package: %s
 Version: %s
@@ -254,25 +264,20 @@ def main(names):
     update_code = 0
     nums = []
     for name in names:
-        k = 0
-        for i in conf["dist"]:
-            if name == i.get("name"):
-                update_code = check_update(k)
-                nums.append(k)
-            k = k + 1
+        m=get_index("dist",name)
+        update_code = check_update(m)
+        nums.append(m)
     if update_code == 1:
         update_file(nums)
     return update_code
 
 
 if __name__ == "__main__":
-    n = 0
     for num in conf['deb']:
         commit = []
         code = main(num['main_program'])
         if code == 1:
             if num.get("include"):
                 include_add(num["include"])
-            gen_debfile(n)
+            gen_debfile(get_index("deb",num.get("name")))
             push(commit)
-        n = n + 1
