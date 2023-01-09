@@ -96,7 +96,8 @@ def check_update(ks):
     name = str(conf["dist"][ks].get("name"))
     url = str(conf["dist"][ks].get("url"))
     repo = url.split('/')[3] + '/' + url.split('/')[4]
-    gh_api = requests.get('https://api.github.com/repos/' + repo + '/releases/latest').text
+    headers = {'Accept': 'application/vnd.github.v3+json', 'Content-Type': 'application/json'}
+    gh_api = requests.get('https://api.github.com/repos/' + repo + '/releases/latest', headers=headers).text
     remote_version = str(json.loads(gh_api)['tag_name']).replace('v', '')
     local_version = ver_conf[name]
     if remote_version == local_version:
