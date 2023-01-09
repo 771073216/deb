@@ -9,17 +9,7 @@ conf_file = open('deb.yaml', encoding='utf-8')
 conf = yaml.load(conf_file, Loader=yaml.Loader)
 version_file = open('version.json', 'r', encoding='utf-8')
 ver_conf = json.load(version_file)
-global update_flag, commit
 
-def add_space(strs,number):
-    k=''
-    m=0
-    for i in strs:
-        k+=' '*number+i
-        m = m + 1
-        if m < len(strs):
-            k +='\n'
-    return k
 
 def download_file(url, file_name):
     res = requests.get(url)
@@ -28,48 +18,107 @@ def download_file(url, file_name):
     file.close()
 
 
-def run_build_command(name):
-    build_command = conf['dist'][name]['build_command']
-    os.system('bash ' + build_command)
-
-
-def check_version(programs, nums):
-    global update_flag, commit
-    update_flag = 0
-    commit = ''
-    for i in programs:
-        url = conf['dist'][i]['url']
-        repo = url.split('/')[3] + '/' + url.split('/')[4]
-        gh_api = requests.get('https://api.github.com/repos/' + repo + '/releases/latest').text
-        remote_version = str(json.loads(gh_api)['tag_name']).replace('v', '')
-        local_version = ver_conf[i]
-        if remote_version == local_version:
-            continue
-        update_flag = 1
-        ver_conf[i] = remote_version
-        version_file_w = open('version.json', 'w', encoding='utf-8')
-        json.dump(ver_conf, version_file_w, sort_keys=True, indent=0)
-        version_file_w.close()
-        commit += '"' + i + ': v' + local_version + ' -> v' + remote_version + ' "'
-    if update_flag == 1:
-        main(nums)
-
-
-def expand_file(zip_type, name, file_name):
-    if zip_type[0] == 'unzip':
-        os.system('unzip tmp/' + file_name + ' ' + conf['dist'][name]['expand']['unzip']['file'] + ' -d tmp/')
-        out_path = 'tmp/' + conf['dist'][name]['expand']['unzip']['file']
-    else:
-        os.system(
-            'tar --no-same-owner -C tmp/ -xf tmp/' + file_name + ' ' + conf['dist'][name]['expand']['tar_gz']['file'])
-        out_path = 'tmp/' + conf['dist'][name]['expand']['tar_gz']['file']
-    return out_path
-
-
 def check_dir(path):
     is_dir = os.path.exists(path)
     if not is_dir:
         os.makedirs(path)
+
+
+def expand_file(str_list, file_name):
+    expand_type = str_list.get("type")
+    out_file = str_list.get("file")
+    if expand_type == 'unzip':
+        os.system('unzip tmp/' + file_name + ' ' + out_file + ' -d tmp/')
+        out_path = 'tmp/' + out_file
+    else:
+        os.system(
+            'tar --no-same-owner -C tmp/ -xf tmp/' + file_name + ' ' + out_file)
+        out_path = 'tmp/' + out_file
+    return out_path
+
+
+def update_file(nums):
+    os.mkdir("tmp")
+    os.mkdir("deb")
+    for i in nums:
+        name = str(conf["dist"][i].get("name"))
+        url = str(conf["dist"][i].get("url"))
+        if str(url).count('%s') == 1:
+            url = url % ver_conf[name]
+        file_name = os.path.basename(url)
+        download_file(url, file_name)
+        if file_name.count('.') != 0:
+            file_name = name + '.' + file_name.split('.', maxsplit=1)[1]
+
+        if conf['dist'][i].get("build_command"):
+            os.system('bash ' + conf['dist'][i].get("build_command"))
+            return
+
+        if conf["dist"][i].get("expand"):
+            out_path = expand_file(conf["dist"][i].get("expand"), file_name)
+        else:
+            out_path = 'tmp/' + file_name
+
+        if conf["dist"][i]["path"].get("program_name"):
+            program_name = conf["dist"][i]["path"].get("program_name")
+            check_dir('deb/usr/local/bin')
+            os.rename(out_path, 'deb/usr/local/bin/' + program_name)
+
+        if conf['dist'][i]['path'].get("config_name"):
+            check_dir('deb/usr/local/etc/')
+            shutil.copytree('files/config/' + name, 'deb/usr/local/etc/' + name)
+
+        if conf['dist'][i]['path'].get("service_file"):
+            service_name = conf['dist'][i]['path'].get("service_file")
+            check_dir('deb/etc/systemd/system')
+            shutil.copyfile('files/servicefiles/' + service_name, 'deb/etc/systemd/system/' + service_name)
+
+        if conf['dist'][i]['path'].get("data_path"):
+            data_path = conf['dist'][i]['path'].get("data_path")
+            data_dir = 'deb' + os.path.dirname(str(data_path))
+            check_dir(data_dir)
+            os.rename('tmp/' + file_name, 'deb' + data_path)
+
+
+def push(commits):
+    commit_str = ""
+    for i in commits:
+        commit_str = commit_str + i + " "
+    os.system('''cat version.json | tr -d '",{}' | grep -v "^$" > version''')
+    os.system('git config --local user.name "github-actions[bot]"')
+    os.system('git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"')
+    os.system('git add .')
+    os.system('git commit -am ' + '"' + commit_str.rstrip(" ") + '"')
+    os.system('git push')
+
+
+def check_update(ks):
+    name = str(conf["dist"][ks].get("name"))
+    url = str(conf["dist"][ks].get("url"))
+    repo = url.split('/')[3] + '/' + url.split('/')[4]
+    gh_api = requests.get('https://api.github.com/repos/' + repo + '/releases/latest').text
+    remote_version = str(json.loads(gh_api)['tag_name']).replace('v', '')
+    local_version = ver_conf[name]
+    if remote_version == local_version:
+        return 0
+    ver_conf[name] = remote_version
+    version_file_w = open('version.json', 'w', encoding='utf-8')
+    json.dump(ver_conf, version_file_w, sort_keys=True, indent=0)
+    version_file_w.close()
+    commit.append(name + ': v' + local_version + ' -> v' + remote_version)
+    return 1
+
+
+def include_add(includes):
+    for name in includes:
+        for i in conf["dist"]:
+            if name == i.get("name"):
+                url = i.get("url")
+                data_path = i["path"].get("data_path")
+                download_file(url, name)
+                data_dir = 'deb' + os.path.dirname(str(data_path))
+                check_dir(data_dir)
+                os.rename('tmp/' + name, 'deb' + data_path)
 
 
 def file_write(path, strings):
@@ -85,41 +134,15 @@ def get_size(path):
     return size
 
 
-def dist(name):
-    url = conf['dist'][name]['url']
-    if str(url).count('%s') == 1:
-        url = url % ver_conf[name]
-    file_name = os.path.basename(url)
-    if file_name.count('.') != 0:
-        file_name = name + '.' + file_name.split('.', maxsplit=1)[1]
-    download_file(url, file_name)
-    if 'build_command' in conf['dist'][name].keys():
-        run_build_command(name)
-        return
-    if 'expand' in conf['dist'][name].keys():
-        out_path = expand_file(list(conf['dist'][name]['expand'].keys()), name, file_name)
-    else:
-        out_path = 'tmp/' + file_name
-
-    if 'program_name' in conf['dist'][name]['path'].keys():
-        program_name = conf['dist'][name]['path']['program_name']
-        check_dir('deb/usr/local/bin')
-        os.rename(out_path, 'deb/usr/local/bin/' + program_name)
-
-    if 'config_name' in conf['dist'][name]['path'].keys():
-        check_dir('deb/usr/local/etc/')
-        shutil.copytree('files/config/' + name, 'deb/usr/local/etc/' + name)
-
-    if 'service_file' in conf['dist'][name]['path'].keys():
-        service_name = conf['dist'][name]['path']['service_file']
-        check_dir('deb/etc/systemd/system')
-        shutil.copyfile('files/servicefiles/' + service_name, 'deb/etc/systemd/system/' + service_name)
-
-    if 'data_path' in conf['dist'][name]['path'].keys():
-        data_path = conf['dist'][name]['path']['data_path']
-        data_dir = 'deb' + os.path.dirname(str(data_path))
-        check_dir(data_dir)
-        os.rename('tmp/' + file_name, 'deb' + data_path)
+def add_space(strs, number):
+    k = ''
+    m = 0
+    for i in strs:
+        k += ' ' * number + i
+        m = m + 1
+        if m < len(strs):
+            k += '\n'
+    return k
 
 
 def gen_debfile(name):
@@ -187,7 +210,7 @@ if [ "$1" = "configure" ] || [ "$1" = "abort-upgrade" ] || [ "$1" = "abort-decon
 %s
     fi
   fi
-fi''' % (custom, add_space(unmask,2), add_space(check_enable,0), add_space(try_restart,6))
+fi''' % (custom, add_space(unmask, 2), add_space(check_enable, 0), add_space(try_restart, 6))
     file_write('deb/DEBIAN/postinst', str_postinst)
 
     str_postrm = '''#!/bin/sh
@@ -205,14 +228,14 @@ if [ "$1" = "purge" ]; then
 %s
 %s
   fi
-fi''' % (add_space(mask,4), add_space(purge,4), add_space(unmask,4))
+fi''' % (add_space(mask, 4), add_space(purge, 4), add_space(unmask, 4))
     file_write('deb/DEBIAN/postrm', str_postrm)
 
     str_prerm = '''#!/bin/sh
 set -e
 if [ -d /run/systemd/system ] && [ "$1" = remove ]; then
 %s
-fi''' % add_space(stop,2)
+fi''' % add_space(stop, 2)
     file_write('deb/DEBIAN/prerm', str_prerm)
 
     str_conffiles = '''%s''' % conffile
@@ -221,29 +244,32 @@ fi''' % add_space(stop,2)
     os.chmod('deb/DEBIAN/postinst', 0o755)
     os.chmod('deb/DEBIAN/postrm', 0o755)
     os.chmod('deb/DEBIAN/prerm', 0o755)
-
-
-def main(name):
-    os.mkdir('tmp')
-    os.mkdir('deb')
-    for i in conf['deb'][name]['include']:
-        dist(i)
-    os.mkdir('tmp/DEBIAN')
-    gen_debfile(name)
-    deb_name = conf['deb'][name]['name']
     os.system('dpkg-deb -b deb/ ' + deb_name + '.deb')
     shutil.rmtree('tmp')
     shutil.rmtree('deb')
-    if update_flag == 1:
-        os.system('''cat version.json | tr -d '",{}' | grep -v "^$" > version''')
-        os.system('git config --local user.name "github-actions[bot]"')
-        os.system('git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"')
-        os.system('git add .')
-        os.system('git commit -am ' + commit)
-        os.system('git push')
+
+
+def main(names):
+    update_code = 0
+    nums = []
+    for name in names:
+        k = 0
+        for i in conf["dist"]:
+            if name == i.get("name"):
+                update_code = check_update(k)
+                nums.append(k)
+            k = k + 1
+    if update_code == 1:
+        update_file(nums)
+    return update_code
+
 
 if __name__ == "__main__":
-    n = 0
     for num in conf['deb']:
-        check_version(num['main_program'], n)
-        n = n + 1
+        commit = []
+        code = main(num['main_program'])
+        if code == 1:
+            if num.get("include"):
+                include_add(num["include"])
+            gen_debfile(num.get("name"))
+            push(commit)
