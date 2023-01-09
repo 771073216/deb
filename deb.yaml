@@ -2,12 +2,12 @@ dist:
   - name: xray
     url: https://github.com/XTLS/Xray-core/releases/latest/download/Xray-linux-64.zip
     expand:
-        type: unzip
-        file: xray
+      type: unzip
+      file: xray
     path:
-        program_name: xray
-        config_name: config.yaml
-        service_file: xray.service
+      program_name: xray
+      config_name: config.yaml
+      service_file: xray.service
   - name: geoip
     url: https://github.com/771073216/geofile/releases/latest/download/geoip.dat
     path:
@@ -38,11 +38,11 @@ deb:
   - name: xray
     arch: amd64
     description: caddy and xray with config
-    main_program: [xray,caddy]
-    include: [geoip,geosite,index]
+    main_program: [ xray,caddy ]
+    include: [ geoip,geosite,index ]
     postinit: xray.sh
-    
+
   - name: vnstat
     arch: amd64
     description: vnStat network traffic monitor
-    main_program: [vnstat]
+    main_program: [ vnstat ]
