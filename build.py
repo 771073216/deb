@@ -47,6 +47,7 @@ def update_file(nums):
             url = url % ver_conf[name]
         file_name = os.path.basename(url)
         download_file(url, file_name)
+        print(url, file_name)
         if file_name.count('.') != 0:
             file_name = name + '.' + file_name.split('.', maxsplit=1)[1]
 
