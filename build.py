@@ -1,6 +1,7 @@
 import json
 import os
 import shutil
+import sys
 
 import requests
 import yaml
@@ -104,7 +105,9 @@ def check_update(ks):
     name = str(conf["dist"][ks].get("name"))
     url = str(conf["dist"][ks].get("url"))
     repo = url.split('/')[3] + '/' + url.split('/')[4]
-    headers = {'Accept': 'application/vnd.github.v3+json', 'Content-Type': 'application/json'}
+    headers = {'Accept': 'application/vnd.github.v3+json',
+               'Content-Type': 'application/json',
+               'authorization': 'Bearer ' + sys.argv[1]}
     gh_api = requests.get('https://api.github.com/repos/' + repo + '/releases/latest', headers=headers).text
     remote_version = str(json.loads(gh_api)['tag_name']).replace('v', '')
     local_version = ver_conf[name]
