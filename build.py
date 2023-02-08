@@ -21,7 +21,6 @@ def get_index(tag,name):
     return -1
 
 def download_file(url, file_name):
-    print(url, file_name)
     res = requests.get(url)
     file = open('tmp/' + file_name, 'wb')
     file.write(res.content)
@@ -259,6 +258,7 @@ fi''' % add_space(stop, 2)
     os.chmod('deb/DEBIAN/postinst', 0o755)
     os.chmod('deb/DEBIAN/postrm', 0o755)
     os.chmod('deb/DEBIAN/prerm', 0o755)
+    print('dpkg-deb -b deb/ ' + deb_name + '.deb')
     os.system('dpkg-deb -b deb/ ' + deb_name + '.deb')
     shutil.rmtree('tmp')
     shutil.rmtree('deb')
