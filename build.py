@@ -274,6 +274,8 @@ def main(names):
         if update_code == 1:
             nums.append(m)
             is_update == 1
+            print(nums,is_update)
+    print(nums,is_update)
     if is_update == 1:
         update_file(nums)
     return is_update
