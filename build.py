@@ -283,11 +283,9 @@ def main(names):
 if __name__ == "__main__":
     for num in conf['deb']:
         commit = []
-        print(num['main_program'])
         code = main(num['main_program'])
         if code == 1:
             if num.get("include"):
                 include_add(num["include"])
-            print(num.get("name"))
-            gen_debfile(get_index("deb",num.get("name")))
+            gen_debfile(num.get("name"))
             push(commit)
