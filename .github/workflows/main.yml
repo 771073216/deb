@@ -15,4 +15,3 @@ jobs:
       - name: Check and upload
         run: |
           python3 build.py "${{ secrets.GITHUB_TOKEN }}"
-          dpkg --version
