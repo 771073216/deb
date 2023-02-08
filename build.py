@@ -51,6 +51,7 @@ def update_file(nums):
     os.mkdir("deb")
     for i in nums:
         name = str(conf["dist"][i].get("name"))
+        print(name)
         url = str(conf["dist"][i].get("url"))
         if str(url).count('%s') == 1:
             url = url % ver_conf[name]
@@ -111,7 +112,6 @@ def check_update(ks):
     gh_api = requests.get('https://api.github.com/repos/' + repo + '/releases/latest', headers=headers).text
     remote_version = str(json.loads(gh_api)['tag_name']).replace('v', '')
     local_version = ver_conf[name]
-    print(remote_version,local_version)
     if remote_version == local_version:
         return 0
     ver_conf[name] = remote_version
