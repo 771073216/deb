@@ -267,8 +267,8 @@ def main(names):
     for name in names:
         m = get_index("dist", name)
         update_code = check_update(m)
+        nums.append(m)
         if update_code == 1:
-            nums.append(m)
             is_update = 1
     if is_update == 1:
         update_file(nums)
