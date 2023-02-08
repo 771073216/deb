@@ -266,15 +266,17 @@ fi''' % add_space(stop, 2)
 
 def main(names):
     update_code = 0
+    is_update = 0
     nums = []
     for name in names:
         m=get_index("dist",name)
         update_code = check_update(m)
-        nums.append(m)
-        print(nums,update_code)
-    if update_code == 1:
+        if update_code == 1:
+            nums.append(m)
+            is_update == 1
+    if is_update == 1:
         update_file(nums)
-    return update_code
+    return is_update
 
 
 if __name__ == "__main__":
