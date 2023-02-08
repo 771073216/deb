@@ -183,12 +183,12 @@ def gen_debfile(name):
 
     for i in conf['deb'][name_num]['main_program']:
         check_enable.append('''\
-      if deb-systemd-helper --quiet was-enabled %s.service; then
-        deb-systemd-helper enable %s.service > /dev/null || true
-        deb-systemd-invoke start %s.service > /dev/null || true
-      else
-        deb-systemd-helper update-state %s.service > /dev/null || true
-      fi''' % (i, i, i, i))
+  if deb-systemd-helper --quiet was-enabled %s.service; then
+    deb-systemd-helper enable %s.service > /dev/null || true
+    deb-systemd-invoke start %s.service > /dev/null || true
+  else
+    deb-systemd-helper update-state %s.service > /dev/null || true
+  fi''' % (i, i, i, i))
         mask.append('deb-systemd-helper mask %s.service > /dev/null || true' % i)
         unmask.append('deb-systemd-helper unmask %s.service > /dev/null || true' % i)
         purge.append('deb-systemd-helper purge %s.service > /dev/null || true' % i)
@@ -201,59 +201,58 @@ def gen_debfile(name):
         if conf['dist'][name_num]['path'].get('config_path'):
             conffile += conf['dist'][name_num]['path']['config_path'] + '\n'
     str_control = '''Package: %s
-    Version: %s
-    Section:
-    Priority:
-    Architecture: %s
-    Maintainer: zz
-    Installed-Size: %s
-    Description: %s
-    ''' % (deb_name, ver.rstrip('+'), deb_arch, size, deb_description)
+Version: %s
+Section:
+Priority:
+Architecture: %s
+Maintainer: zz
+Installed-Size: %s
+Description: %s
+''' % (deb_name, ver.rstrip('+'), deb_arch, size, deb_description)
     file_write('deb/DEBIAN/control', str_control)
 
     str_postinst = '''#!/bin/sh
-    set -e
-    %s
-    if [ "$1" = "configure" ] || [ "$1" = "abort-upgrade" ] || [ "$1" = "abort-deconfigure" ] || [ "$1" = "abort-remove" ]; then
-    %s
-    %s
-      if [ -d /run/systemd/system ]; then
-        systemctl --system daemon-reload > /dev/null || true
-        if [ -n "$2" ]; then
-    %s
-        fi
-      fi
-    fi''' % (custom, add_space(unmask, 2), add_space(check_enable, 0), add_space(try_restart, 6))
+set -e
+%s
+if [ "$1" = "configure" ] || [ "$1" = "abort-upgrade" ] || [ "$1" = "abort-deconfigure" ] || [ "$1" = "abort-remove" ]; then
+%s
+%s
+  if [ -d /run/systemd/system ]; then
+    systemctl --system daemon-reload > /dev/null || true
+    if [ -n "$2" ]; then
+%s
+    fi
+  fi
+fi''' % (custom, add_space(unmask, 2), add_space(check_enable, 0), add_space(try_restart, 6))
     file_write('deb/DEBIAN/postinst', str_postinst)
 
     str_postrm = '''#!/bin/sh
-    set -e
-    if [ -d /run/systemd/system ]; then
-      systemctl --system daemon-reload > /dev/null || true
-    fi
-    if [ "$1" = "remove" ]; then
-      if [ -x "/usr/bin/deb-systemd-helper" ]; then
-    %s
-      fi
-    fi
-    if [ "$1" = "purge" ]; then
-      if [ -x "/usr/bin/deb-systemd-helper" ]; then
-    %s
-    %s
-      fi
-    fi''' % (add_space(mask, 4), add_space(purge, 4), add_space(unmask, 4))
+set -e
+if [ -d /run/systemd/system ]; then
+  systemctl --system daemon-reload > /dev/null || true
+fi
+if [ "$1" = "remove" ]; then
+  if [ -x "/usr/bin/deb-systemd-helper" ]; then
+%s
+  fi
+fi
+if [ "$1" = "purge" ]; then
+  if [ -x "/usr/bin/deb-systemd-helper" ]; then
+%s
+%s
+  fi
+fi''' % (add_space(mask, 4), add_space(purge, 4), add_space(unmask, 4))
     file_write('deb/DEBIAN/postrm', str_postrm)
 
     str_prerm = '''#!/bin/sh
-    set -e
-    if [ -d /run/systemd/system ] && [ "$1" = remove ]; then
-    %s
-    fi''' % add_space(stop, 2)
+set -e
+if [ -d /run/systemd/system ] && [ "$1" = remove ]; then
+%s
+fi''' % add_space(stop, 2)
     file_write('deb/DEBIAN/prerm', str_prerm)
 
     str_conffiles = '''%s''' % conffile
     file_write('deb/DEBIAN/conffiles', str_conffiles)
-
     os.chmod('deb/DEBIAN/postinst', 0o755)
     os.chmod('deb/DEBIAN/postrm', 0o755)
     os.chmod('deb/DEBIAN/prerm', 0o755)
