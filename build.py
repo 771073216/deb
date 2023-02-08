@@ -51,7 +51,6 @@ def update_file(nums):
     os.mkdir("deb")
     for i in nums:
         name = str(conf["dist"][i].get("name"))
-        print(name)
         url = str(conf["dist"][i].get("url"))
         if str(url).count('%s') == 1:
             url = url % ver_conf[name]
@@ -273,9 +272,7 @@ def main(names):
         update_code = check_update(m)
         if update_code == 1:
             nums.append(m)
-            is_update == 1
-            print(nums,is_update)
-    print(nums,is_update)
+            is_update = 1
     if is_update == 1:
         update_file(nums)
     return is_update
