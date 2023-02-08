@@ -21,6 +21,7 @@ def get_index(tag,name):
     return -1
 
 def download_file(url, file_name):
+    print(url, file_name)
     res = requests.get(url)
     file = open('tmp/' + file_name, 'wb')
     file.write(res.content)
