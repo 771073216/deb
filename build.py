@@ -271,6 +271,7 @@ def main(names):
         m=get_index("dist",name)
         update_code = check_update(m)
         nums.append(m)
+        print(nums,update_code)
     if update_code == 1:
         update_file(nums)
     return update_code
