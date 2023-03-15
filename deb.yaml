@@ -16,19 +16,19 @@ dist:
     url: https://github.com/771073216/geofile/releases/latest/download/geosite.dat
     path:
       data_path: /usr/local/share/xray/geosite.dat
-  - name: index
-    url: https://raw.githubusercontent.com/771073216/azzb/master/github
-    path:
-      data_path: /var/www/index.html
-  - name: caddy
-    url: https://github.com/caddyserver/caddy/releases/latest/download/caddy_%s_linux_amd64.tar.gz
-    expand:
-      type: tar_gz
-      file: caddy
-    path:
-      program_name: caddy
-      config_name: Caddyfile
-      service_file: caddy.service
+#  - name: index
+#    url: https://raw.githubusercontent.com/771073216/azzb/master/github
+#    path:
+#      data_path: /var/www/index.html
+#  - name: caddy
+#    url: https://github.com/caddyserver/caddy/releases/latest/download/caddy_%s_linux_amd64.tar.gz
+#    expand:
+#      type: tar_gz
+#      file: caddy
+#    path:
+#      program_name: caddy
+#      config_name: Caddyfile
+#      service_file: caddy.service
   - name: vnstat
     url: https://github.com/vergoh/vnstat/archive/refs/tags/v%s.zip
     build_command: build.sh
