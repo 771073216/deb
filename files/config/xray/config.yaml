@@ -1,28 +1,51 @@
-inbounds:
-- listen: /dev/shm/grpc.socket,0666
-  protocol: trojan
-  tag: grpc
-  settings:
-    clients:
-    - password: "passwd"
-  streamSettings:
-    network: grpc
-    grpcSettings:
-      serviceName: grpc
-
-outbounds:
-- tag: direct
-  protocol: freedom
-  domainStrategy: UseIPv4
-- tag: blocked
-  protocol: blackhole
-
+---
+log:
+  loglevel: info
+  access: "/var/log/xray/access.log"
+  error: "/var/log/xray/error.log"
 routing:
-  domainStrategy: AsIs
+  domainStrategy: IPIfNonMatch
   rules:
   - type: field
     ip:
-    - geoip:private
-    domain:
-    - geosite:category-ads-all
-    outboundTag: blocked
+    - geoip:cn
+    outboundTag: block
+inbounds:
+- listen: 0.0.0.0
+  port: 443
+  protocol: vless
+  settings:
+    clients:
+    - id: "passwd"
+      flow: ""
+    decryption: none
+  streamSettings:
+    network: grpc
+    security: reality
+    realitySettings:
+      show: false
+      dest: www.example.com:443
+      xver: 0
+      serverNames:
+      - www.example.com
+      privateKey: "..........................................."
+      shortIds:
+      - ""
+      - a1
+    grpcSettings:
+      serviceName: grpc
+  sniffing:
+    enabled: true
+    destOverride:
+    - http
+    - tls
+outbounds:
+- protocol: freedom
+  tag: direct
+- protocol: blackhole
+  tag: block
+policy:
+  levels:
+    "0":
+      handshake: 2
+      connIdle: 120
