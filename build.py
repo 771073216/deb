@@ -182,6 +182,7 @@ def gen_debfile(name):
         f.close()
 
     for i in conf['deb'][name_num]['main_program']:
+        name_num = get_index("dist", i)
         check_enable.append('''\
   if deb-systemd-helper --quiet was-enabled %s.service; then
     deb-systemd-helper enable %s.service > /dev/null || true
