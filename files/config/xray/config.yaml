@@ -28,7 +28,7 @@ inbounds:
       xver: 0
       serverNames:
       - www.example.com
-      privateKey: "..........................................."
+      privateKey: "private_key"
       shortIds:
       - ""
       - a1
