@@ -1,7 +1,7 @@
 dist:
   - name: xray
-    #url: https://github.com/XTLS/Xray-core/releases/latest/download/Xray-linux-64.zip
-    url: https://github.com/XTLS/Xray-core/releases/download/v1.8.3/Xray-linux-64.zip
+    url: https://github.com/XTLS/Xray-core/releases/latest/download/Xray-linux-64.zip
+    #url: https://github.com/XTLS/Xray-core/releases/download/v1.8.3/Xray-linux-64.zip
     expand:
       type: unzip
       file: xray
